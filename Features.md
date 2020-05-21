@@ -1,0 +1,24 @@
+#### API REST 
+- [ ] **_Data Entry:_**
+  - [ ] Cadastro de problema/solução auto.:
+    - Ninho
+    - Tipo do script (Python ou BAT)
+    - Script
+  - [ ] Cadastro de problema/solução manual:
+    - Ninho
+    - Tipo do tutorial (Vídeo ou Imagens)
+    - Tutorial
+  - [ ] Feedback de soluções
+    - Log de erros
+    - Sugestões usuário
+    - Avaliação usuário
+- [ ] **_Data Out:_**
+  - [ ] Informações do computador
+    - IP computador
+    - Etiqueta Monitor
+    - Etiqueta estabilizador
+    - Exceções proxy
+  - [ ] Problemas
+    - Ninhos
+    - Nome e descrição
+    - Solução
