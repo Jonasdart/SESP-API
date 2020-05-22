@@ -102,8 +102,8 @@ class Glpi():
 
 
     def return_computer(self, inventory_number):
-        query = 'select glpi_computers.id, glpi_computers.name, ip.name from `glpi_computers` '
-        query += 'inner join glpi_ipaddresses as ip on ip.mainitems_id=`glpi_computers`.id '
+        query = 'select glpi_computers.id, glpi_computers.name from `glpi_computers` '
+        #query += 'inner join glpi_ipaddresses as ip on ip.mainitems_id=`glpi_computers`.id '
         query += f'where otherserial = {inventory_number}'
         response = self.commit_with_return(query)
 
@@ -114,8 +114,7 @@ class Glpi():
         for computer in response:
             computers[x+1] = {
                 'ID'   : computer[0],
-                'Name' : computer[1],
-                'IP'   : computer[2]
+                'Name' : computer[1]
             }
             x += 1
         

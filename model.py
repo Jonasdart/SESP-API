@@ -7,11 +7,35 @@ __author__ = 'Jonas Duarte'
 
 from glpi import Glpi
 from database_manager import Database
+from datetime import datetime
 
 class Backend():
     def __init__(self):
         self.database = Database()
         self.glpi = Glpi()
+
+
+    def return_date_time(self):
+        try:
+            date = datetime.now().strftime('%d-%m-%Y')
+            time = datetime.now().strftime('%H:%M:%S')
+
+            self.r = {
+                'Message' : date + ' ' + time,
+                'Date'    : date,
+                'Time'    : time,
+                'Status'  : 200
+            }
+
+        except Exception as e:
+            self.r = {
+                'Message' : {
+                    'Error' : 'Return_date_time => ' + str(e)
+                },
+                'Status' : 404
+            }
+
+        return self.r
 
 
     def return_resume_of_computer(self, data):

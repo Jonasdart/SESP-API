@@ -1,11 +1,11 @@
 #### API REST 
 - [ ] **_Data Entry:_**
   - [ ] Cadastro de problema/solução auto.:
-    - Ninho
+    - Ninho (Onde se encaixa. Exemplo: Internet; Impressora; Travamento)
     - Tipo do script (Python ou BAT)
     - Script
   - [ ] Cadastro de problema/solução manual:
-    - Ninho
+    - Ninho (Onde se encaixa. Exemplo: Internet; Impressora; Travamento)
     - Tipo do tutorial (Vídeo ou Imagens)
     - Tutorial
   - [ ] Feedback de soluções
@@ -13,12 +13,17 @@
     - Sugestões usuário
     - Avaliação usuário
 - [ ] **_Data Out:_**
-  - [ ] Informações do computador
-    - IP computador
-    - Etiqueta Monitor
-    - Etiqueta estabilizador
-    - Exceções proxy
+  - [x] Informações do computador
+    - [x] Nome do computador
+    - ~IP computador~
+    - ~Etiqueta Monitor~
+    - ~Etiqueta estabilizador~
+    - ~Exceções proxy~
   - [ ] Problemas
     - Ninhos
     - Nome e descrição
     - Solução
+  - [x] Produtividade
+    - [x] Data e Hora
+    - [ ] Comunicados
+    - [ ] Alertas

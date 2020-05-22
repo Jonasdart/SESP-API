@@ -4,10 +4,10 @@
 #Python3
 __author__ = 'Jonas Duarte'
 
-
+import configparser
+import json as js
 from flask import Flask, jsonify, request
 from model import Backend
-import configparser
 
 app = Flask(__name__)
 backend = Backend()
@@ -23,18 +23,37 @@ def bind_server():
     return [server_host, server_port]
 
 
+@app.route('/get_date_time', methods=['GET'])
+def get_date_time():
+    try:
+        response = backend.return_date_time()
+        if response['Status'] >= 400:
+            raise Exception(response['Message']['Error'])
+    except Exception as e:
+        response = {
+            'Message' : {
+                'Error' : str(e)
+            },
+            'Status' : 400
+        }
+    status = int(response['Status'])
+    return jsonify(response), status
+
+
 @app.route('/get_computer', methods=['POST'])
 def get_computer():
     try:
         data = request.get_json()
+        data = js.loads(data)
+        print(len(data))
         if len(data) > 2:
             e = 'Request out of params'
             raise Exception(e)
         
         response = backend.return_resume_of_computer(data)
-        if response['Status'] != 200:
-            raise Exception(response)
-        
+        if response['Status'] >= 400:
+            print(response)
+            raise Exception(response['Message']['Error'])
     except Exception as e:
         response = {
             'Message' : {
@@ -47,4 +66,4 @@ def get_computer():
 
 if __name__ == "__main__":
     server_address, server_port = bind_server() 
-    app.run(host= server_address, port= server_port, debug=False)
+    app.run(host= server_address, port= server_port, debug=True)
