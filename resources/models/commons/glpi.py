@@ -12,16 +12,16 @@ import configparser
 class Glpi():
     def __init__(self):
         self.connected = False
-        self.gera_query = Gera_query()
+        self.generate_queries = Gera_query()
 
 
     def connect(self):
         if not self.connected:
             credencials = self.authenticate()
-            address = credencials.get('AddressBank')
-            name = credencials.get('NameBank')
-            user = credencials.get('UserBank')
-            password = credencials.get('PasswordBank')
+            address = credencials.get('Address')
+            name = credencials.get('Name')
+            user = credencials.get('User')
+            password = credencials.get('Password')
         
             try:
                 self.bank = mdb.connect(address, user, password, name)
@@ -58,21 +58,34 @@ class Glpi():
         [2] Senha Usuario, [3] Nome Banco
         """
         config = configparser.ConfigParser()
-        config.read('conf.cfg')
+        config.read('resources\\models\\commons\\conf.cfg')
 
-        address_bank = config.get('config_bank_glpi', 'address_bank')
-        name_bank = config.get('config_bank_glpi', 'name_bank')
-        user_bank = config.get('config_bank_glpi', 'user_bank')
-        password_bank = config.get('config_bank_glpi', 'password_bank')
-        if password_bank == "''":
-            password_bank = ''
+        address = config.get('glpi_database', 'address')
+        name = config.get('glpi_database', 'name')
+        user = config.get('glpi_database', 'user')
+        password = config.get('glpi_database', 'password')
+        if password == "''":
+            password = ''
 
         return {
-            'AddressBank' : address_bank,
-            'NameBank' : name_bank,
-            'UserBank' : user_bank,
-            'PasswordBank' : password_bank
+            'Address' : address,
+            'Name' : name,
+            'User' : user,
+            'Password' : password
         }
+
+    
+    def return_columns(self, table):
+        query = self.generate_queries.listar_colunas(table)
+        columns = self.commit_with_return(query)
+        dict_columns = {
+
+        }
+
+        for column in columns:
+            dict_columns[column[0]] = [column[x+1] for x in range(len(column[1:]))]
+
+        return dict_columns
 
 
     def commit_without_return(self, query):
@@ -99,24 +112,3 @@ class Glpi():
             self.disconnect()
 
         return results
-
-
-    def return_computer(self, inventory_number):
-        query = 'select glpi_computers.id, glpi_computers.name from `glpi_computers` '
-        #query += 'inner join glpi_ipaddresses as ip on ip.mainitems_id=`glpi_computers`.id '
-        query += f'where otherserial = {inventory_number}'
-        response = self.commit_with_return(query)
-
-        computers = {
-
-        }
-        x = 0
-        for computer in response:
-            computers[x+1] = {
-                'ID'   : computer[0],
-                'Name' : computer[1]
-            }
-            x += 1
-        
-
-        return computers

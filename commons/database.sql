@@ -12,7 +12,7 @@ create table computers_status(
 create table computers(
     `id` int(12) primary key auto_increment not null,
     `status_id` int(12) not null,
-    `glpi_id` int(12),
+    `glpi_id` int(12)
 )engine=InnoDB;
 
 
@@ -59,7 +59,7 @@ create table problems(
 create table causes(
     `id` int(12) primary key auto_increment not null,
     `incident_id` int(12) not null,
-    `problem_id` int(12) not null,
+    `problem_id` int(12) not null
 )engine=InnoDB;
 
 

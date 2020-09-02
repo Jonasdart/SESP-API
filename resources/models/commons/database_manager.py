@@ -11,17 +11,17 @@ from mysql_manager import Gera_query
 
 class Database():
     def __init__(self):
-        self.gerador_de_query = Gera_query()
+        self.generate_queries = Gera_query()
         self.connected = False
 
 
     def connect(self):
         if not self.connected:
             credencials = self.authenticate()
-            address = credencials.get('AddressBank')
-            name = credencials.get('NameBank')
-            user = credencials.get('UserBank')
-            password = credencials.get('PasswordBank')
+            address = credencials.get('Address')
+            name = credencials.get('Name')
+            user = credencials.get('User')
+            password = credencials.get('Password')
         
             try:
                 self.bank = mdb.connect(address, user, password, name)
@@ -58,25 +58,25 @@ class Database():
         [2] Senha Usuario, [3] Nome Banco
         """
         config = configparser.ConfigParser()
-        config.read('conf.cfg')
+        config.read('resources\\models\\commons\\conf.cfg')
 
-        address_bank = config.get('config_bank', 'address_bank')
-        name_bank = config.get('config_bank', 'name_bank')
-        user_bank = config.get('config_bank', 'user_bank')
-        password_bank = config.get('config_bank', 'password_bank')
-        if password_bank == "''":
-            password_bank = ''
+        address = config.get('sesp_database', 'address')
+        name = config.get('sesp_database', 'name')
+        user = config.get('sesp_database', 'user')
+        password = config.get('sesp_database', 'password')
+        if password == "''":
+            password = ''
 
         return {
-            'AddressBank' : address_bank,
-            'NameBank' : name_bank,
-            'UserBank' : user_bank,
-            'PasswordBank' : password_bank
+            'Address' : address,
+            'Name' : name,
+            'User' : user,
+            'Password' : password
         }
 
 
-    def return_columns(self,  table):
-        query = self.gerador_de_query.listar_colunas(table)
+    def return_columns(self, table):
+        query = self.generate_queries.listar_colunas(table)
         columns = self.commit_with_return(query)
         dict_columns = {
 
