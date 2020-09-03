@@ -13,24 +13,18 @@ class Problems(Resource):
         '''
         Retornar problema
         '''
-        data = request.args
-        response = None
-        return response
+        raise NotImplementedError
 
     
     def post(self):
         '''
         Criar problema
         '''
-        data = request.get_json()
-        response = None
-        return response
+        raise NotImplementedError
     
     
     def patch(self):
         '''
         Ativar/ desativar problema
         '''
-        data = request.args
-        response = None
-        return response
+        raise NotImplementedError

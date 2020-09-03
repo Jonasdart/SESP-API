@@ -7,7 +7,7 @@ __author__ = 'Jonas Duarte'
 
 import MySQLdb as mdb
 import configparser
-from mysql_manager import Gera_query
+from resources.models.commons.mysql_manager import Gera_query
 
 class Database():
     def __init__(self):

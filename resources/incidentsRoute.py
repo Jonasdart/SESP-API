@@ -13,24 +13,18 @@ class Incidents(Resource):
         '''
         Retornar incidente
         '''
-        data = request.args
-        response = None
-        return response
+        raise NotImplementedError
 
     
     def post(self):
         '''
         Criar incidente
         '''
-        data = request.get_json()
-        response = None
-        return response
+        raise NotImplementedError
     
     
     def patch(self):
         '''
         Ativar/ desativar incidente
         '''
-        data = request.args
-        response = None
-        return response
+        raise NotImplementedError

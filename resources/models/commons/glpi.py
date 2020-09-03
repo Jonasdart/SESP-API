@@ -5,7 +5,7 @@
 __author__ = 'Jonas Duarte'
 
 
-from mysql_manager import Gera_query
+from resources.models.commons.mysql_manager import Gera_query
 import MySQLdb as mdb
 import configparser
 
@@ -17,6 +17,7 @@ class Glpi():
 
     def connect(self):
         if not self.connected:
+            print('Conectando...')
             credencials = self.authenticate()
             address = credencials.get('Address')
             name = credencials.get('Name')
@@ -40,6 +41,7 @@ class Glpi():
 
     def disconnect(self):
         if self.connected:
+            print('Disconectando...')
             try:
                 self.bank.close()
             except:
