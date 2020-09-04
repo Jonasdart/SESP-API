@@ -26,7 +26,7 @@ class ByInventoryNumber(Resource):
             if len(data) != 1:
                 raise Exception('Bad URL request. Consult the documentation to know the parameters.')
 
-            inventory_number = data['inventorynumber']
+            inventory_number = data['number']
             if not inventory_number:
                 raise Exception('Please inform a valid InventoryNumber')
             
@@ -43,6 +43,7 @@ class ByInventoryNumber(Resource):
         Use para configurar o computador no GLPI e consequentemente fisicamente.
         '''
         data = request.get_json()
+        ip_request = request.host
         actions = 0
         try:
             
@@ -62,7 +63,7 @@ class ByInventoryNumber(Resource):
                 self.model._change_name_in_glpi(str(inventory_number), change_name)
                 actions += 1
             if force_inventory:
-                self.model._force_next_inventory(inventory_number)
+                self.model._force_next_inventory(inventory_number, ip_request)
                 actions += 1
             if schedule_reboot:
                 self.model._schedule_next_reboot(inventory_number, schedule_reboot)
@@ -99,8 +100,24 @@ class ByName(Resource):
 
 
     def get(self):
-        data = request.args
-        response = self.model._search_in_glpi_by_name(data)
+        '''
+        Usada para buscar informações referentes ao computador com o nome informado
+        '''
+        try:
+
+            data = dict(request.args)            
+            if len(data) != 1:
+                raise Exception('Bad URL request. Consult the documentation to know the parameters.')
+
+            name = data['name']
+            if not name:
+                raise Exception('Please inform a valid name of computer')
+            
+            response = self.model._search_in_glpi_by_name(name)
+
+        except Exception as e:
+            raise e
+
         return response
 
 
