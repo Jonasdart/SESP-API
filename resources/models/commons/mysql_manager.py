@@ -84,12 +84,10 @@ class Gera_query(object):
             for dado in dados:
                 cont += 1
                 self.query += f"{dado}"
-                print(dado)
                 if cont < len(dados):
                     self.query += ", "
             self.query += ")"
 
-        print(self.query)
         return self.query
 
 

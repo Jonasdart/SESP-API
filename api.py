@@ -18,14 +18,6 @@ from resources.solutionsRoute import Solutions
 app = Flask(__name__)
 api = Api(app)
 
-@app.route('/')
-def home():
-    return """
-        <!DOCTYPE html>
-        <header>
-            <meta http-equiv="refresh" content=1;url="http://192.168.0.69/computers/byinventory?inventorynumber=">
-        </header>
-    """
 
 api.add_resource(Computers.ByInventoryNumber, '/computers/byinventory')
 api.add_resource(Computers.ByName, '/computers/byname')

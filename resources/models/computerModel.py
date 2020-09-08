@@ -4,7 +4,9 @@
 #Python3
 __author__ = 'Jonas Duarte'
 
+from resources.models.commons.mysql_manager import Gera_query
 from resources.models.commons.glpi import Glpi
+from resources.models.commons.database_manager import Database
 import requests
 
 class ComputerModel():
@@ -33,7 +35,37 @@ class ComputerModel():
             return_results = {}
 
             if len(results) == 0:
-                raise Exception('Nenhum Resultado Encontrado')
+                raise 'Nenhum Resultado Encontrado'
+            else:
+                c = 0
+                for result in results:
+                    info_results = {}
+                    x = 0
+                    for dado in result:
+                        info_results[header[x]] = dado
+                        x += 1
+                    c += 1
+                    return_results[c] = info_results
+        except Exception as e:
+            raise e
+
+        return return_results
+
+
+    def _search_by_inventory_number(self, inventory_number):
+        try:
+            query = f"""
+                select
+                    id as computer_id, computer_name, status_id, glpi_id, glpi_name
+                    from computers where inventory_number={inventory_number}
+            """
+            header = ['computer_id', 'computer_name', 'status_id', 'glpi_id', 'glpi_name']
+            results = Database().commit_with_return(query)
+
+            return_results = {}
+
+            if len(results) == 0:
+                raise 'Nenhum Resultado Encontrado'
             else:
                 c = 0
                 for result in results:
@@ -52,6 +84,7 @@ class ComputerModel():
 
     def _search_in_glpi_by_inventory_number(self, inventory_number):
         try:
+
             query = f"""
                 select 
                     computer.id as computer_id, 
@@ -73,7 +106,7 @@ class ComputerModel():
             return_results = {}
 
             if len(results) == 0:
-                raise Exception('Nenhum Resultado Encontrado')
+                raise 'Nenhum Resultado Encontrado'
             else:
                 c = 0
                 for result in results:
@@ -116,6 +149,7 @@ class ComputerModel():
         try:
 
             computer = self._search_in_glpi_by_inventory_number(str(inventory_number))
+            glpi_id = computer[1]['computer_id']
 
             if now:
                 if not computer_ipaddress:
@@ -131,7 +165,10 @@ class ComputerModel():
                 response = requests.get(request)
                 
                 if response.status_code != 200:
-                    raise Exception('Error during request new inventory by http server.')
+                    raise 'Error during request new inventory by http server.'
+            
+            query = f"insert into computers_logs(`type_id`, `computer_id`, `body`) values (8, {glpi_id}, 'New inventory has completed succesfully')"
+            Database().commit_without_return(query)
 
         except Exception as e:
             raise e      
@@ -143,3 +180,85 @@ class ComputerModel():
 
     def _schedule_next_shutdown(self, inventory_number, now=False):
         raise NotImplementedError
+
+
+    def _new_computer(self, computer_name, inventory_number, last_request_host):
+        try:
+            query = Gera_query().inserir_na_tabela('computers', ['computer_name', 'inventory_number', 'status_id', 'last_request_host'], [f'"{computer_name}"', f'"{inventory_number}"', 6, f'"{last_request_host}"'])
+            Database().commit_without_return(query)
+
+            status, computer_info = self._validate_informations(inventory_number, last_request_host)
+
+            glpi_id = computer_info[1]['computer_id']
+            glpi_name = computer_info[1]['computer_name']
+
+            query = f'UPDATE `computers` SET `glpi_id` = {glpi_id}, `glpi_name` = "{glpi_name}" WHERE `inventory_number`= {inventory_number};'
+            Database().commit_without_return(query)
+
+            computer_info = self._search_by_inventory_number(inventory_number)
+        
+        except Exception as e:
+            raise e
+
+        return status, computer_info
+
+    
+    def _update_computer(self, request_header, computer_host):
+        try:
+            inventory_number = request_header['Inventory_Number']
+            computer_name = request_header['Computer_Name']
+            last_request_host = computer_host
+            
+            try:
+                computer = self._search_by_inventory_number(inventory_number)
+
+                if computer[1]['computer_name'] != computer_name:
+                    query = f'UPDATE `computers` SET `computer_name` = "{computer_name}", `last_request_host` = "{computer_host}" WHERE `inventory_number`= {inventory_number};'
+                    Database().commit_without_return(query)
+
+                status, computer_info = self._validate_informations(inventory_number, computer_host)
+
+
+                glpi_id = computer_info[1]['computer_id']
+                glpi_name = computer_info[1]['computer_name']
+
+                query = f'UPDATE `computers` SET `glpi_id` = {glpi_id}, `glpi_name` = "{glpi_name}" WHERE `inventory_number`= {inventory_number};'
+                Database().commit_without_return(query)
+
+            except:
+                status, computer = self._new_computer(computer_name, inventory_number, last_request_host)
+
+        except Exception as e:
+            raise e
+
+        return status, computer
+
+
+    def _validate_informations(self, inventory_number, request_host):
+        try:
+            status = 7
+            _info = self._search_by_inventory_number(inventory_number)
+            _glpi_info = self._search_in_glpi_by_inventory_number(inventory_number)
+
+            count = 0
+            for computer in _glpi_info.values():
+                if computer['computer_ipaddress'] == request_host:
+                    count += 1
+
+            glpi_id = _glpi_info[1]['computer_id']
+            if count == 0:
+                query = f"insert into computers_logs(`type_id`, `computer_id`, `body`) values (4, {glpi_id}, 'IP information does not match')"
+                Database().commit_without_return(query)
+                status = 4
+            
+            if _glpi_info[1]['computer_name'] != _info[1]['computer_name']:
+                status = 1
+            
+            if _info[1]['status_id'] != status:
+                query = f'UPDATE `computers` SET `status_id` = {status} WHERE `inventory_number`= {inventory_number};'
+                Database().commit_without_return(query)
+
+        except Exception as e:
+            raise e
+
+        return status, _glpi_info

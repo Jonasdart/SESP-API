@@ -7,13 +7,20 @@ __author__ = 'Jonas Duarte'
 from flask import request
 from flask_restful import Resource
 from resources.models.computerModel import ComputerModel as Model
+from resources.models.commons.errors.computersRouteErrors import ErrorController
 
 
 class ByInventoryNumber(Resource):
 
     
     def __init__(self):
-        self.model = Model()
+        try:
+            self.model = Model()
+            self.computer_host = request.host
+            self.computer_status, computer = self.model._update_computer(request.headers, self.computer_host)
+
+        except Exception as e:
+            ErrorController(e, '/computers/byinventory', '__init__', self.computer_host)
 
 
     def get(self):
@@ -24,16 +31,18 @@ class ByInventoryNumber(Resource):
 
             data = dict(request.args)            
             if len(data) != 1:
-                raise Exception('Bad URL request. Consult the documentation to know the parameters.')
+                self.error = 'Bad URL request. Consult the documentation to know the parameters.'
+                raise self.error
 
             inventory_number = data['number']
             if not inventory_number:
-                raise Exception('Please inform a valid InventoryNumber')
+                self.error = 'Please inform a valid InventoryNumber'
+                raise self.error
             
             response = self.model._search_in_glpi_by_inventory_number(inventory_number)
 
-        except Exception as e:
-            raise e
+        except:
+            ErrorController(self.error, '/computers/byinventory', 'get', self.computer_host)
 
         return response
     
@@ -42,32 +51,43 @@ class ByInventoryNumber(Resource):
         '''
         Use para configurar o computador no GLPI e consequentemente fisicamente.
         '''
-        data = request.get_json()
+        body = request.get_json()
+        header = request.headers
         ip_request = request.host
+        
         actions = 0
         try:
             
-            if(len(data) != 5):
-                raise Exception('Bad Request')
+            if(len(body) != 4):
+                self.error = 'Bad Request'
+                raise self.error
 
-            inventory_number = data['inventory_number']
-            change_name = data['change_name']
-            force_inventory = data['force_inventory']
-            schedule_reboot = data['schedule_reboot']
-            schedule_shutdown = data['schedule_shutdown']
+            inventory_number = header['inventory_number']
+            change_name = body['change_name']
+            force_inventory = body['force_inventory']
+            schedule_reboot = body['schedule_reboot']
+            schedule_shutdown = body['schedule_shutdown']
 
             if not inventory_number:
-                raise Exception('Please inform a valid InventoryNumber')
+                self.error = 'Please inform a valid InventoryNumber'
+                raise self.error
 
             if change_name:
                 self.model._change_name_in_glpi(str(inventory_number), change_name)
                 actions += 1
+
             if force_inventory:
-                self.model._force_next_inventory(inventory_number, ip_request)
-                actions += 1
+                if self.computer_status != 1 and self.computer_status != 6:
+                    self.model._force_next_inventory(inventory_number, ip_request)
+                    actions += 1
+                else:
+                    self.error = 'The name of this computer does not match with GLPI information'
+                    raise self.error
+
             if schedule_reboot:
                 self.model._schedule_next_reboot(inventory_number, schedule_reboot)
                 actions += 1
+
             if schedule_shutdown:
                 self.model._schedule_next_shutdown(inventory_number, schedule_shutdown)
                 actions += 1
@@ -77,8 +97,8 @@ class ByInventoryNumber(Resource):
             }
 
         except:
-            raise Exception(f'The System has been performed {actions} actions, but, a exception has occurred. Consult the documentation to know the order of execution of the actions.')
-
+            self.error = f'The System has been performed {actions} actions, but, a exception has occurred. Consult the documentation to know the order of execution of the actions. description:{self.error}'
+            ErrorController(self.error, '/computers/byinventory', 'put', self.computer_host)
 
         return response
 
@@ -87,8 +107,12 @@ class ByInventoryNumber(Resource):
         '''
         Usado para alterar o Status do computador no GLPI para Ativo.
         '''
-        data = request.args
-        response = None
+        try:
+            data = request.args
+            response = None
+        except Exception as e:
+            ErrorController(e, '/computers/byinventory', 'patch', self.computer_host)
+
         return response
 
 
@@ -107,16 +131,18 @@ class ByName(Resource):
 
             data = dict(request.args)            
             if len(data) != 1:
-                raise Exception('Bad URL request. Consult the documentation to know the parameters.')
+                self.error = 'Bad URL request. Consult the documentation to know the parameters.'
+                raise self.error
 
             name = data['name']
             if not name:
-                raise Exception('Please inform a valid name of computer')
+                self.error = 'Please inform a valid name of computer'
+                raise self.error
             
             response = self.model._search_in_glpi_by_name(name)
 
         except Exception as e:
-            raise e
+            ErrorController(self.error, '/computers/byname', 'get', self.computer_host)
 
         return response
 
@@ -129,6 +155,10 @@ class ByIpAddress(Resource):
 
 
     def get(self):
-        data = request.args
-        response = self.model._search_in_glpi_by_ip_address(data)
+        try:
+            data = request.args
+            response = self.model._search_in_glpi_by_ip_address(data)
+        except Exception as e:
+            ErrorController(e, '/computers/byip', 'get', self.computer_host)
+
         return response

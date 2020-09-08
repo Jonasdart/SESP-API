@@ -7,12 +7,24 @@ create table computers_status(
     `name` varchar(100) not null,
     `description` varchar(200)
 )engine=InnoDB;
+insert into `computers_status`(`name`,`description`) values
+('Nome fora do padrao', 'Aguardando alteração de nome'),
+('Fusion indisponível', 'Aguardando instalação do Fusion Inventory'),
+('Fusion server inacessível', 'O servidor http do Fusion Inventory utilizado para forçar o inventário não está acessível'),
+('Inconsistência de IP', 'A informação de IP da requisição não bate com a informação de IP do GLPI'),
+('Em erro', 'o SESP encontrou erros que não foram resolvidos'),
+('Aguardando', 'Aguardando triagem de status'),
+('Pronto', 'Aguardando o próximo inventário do Fusion');
 
 
 create table computers(
     `id` int(12) primary key auto_increment not null,
+    `computer_name` varchar(100) not null,
+    `inventory_number` varchar(100),
     `status_id` int(12) not null,
-    `glpi_id` int(12)
+    `last_request_host` varchar(100) not null,
+    `glpi_id` int(12),
+    `glpi_name` varchar(100)
 )engine=InnoDB;
 
 
@@ -23,18 +35,31 @@ create table logs_types(
     `description` varchar(200)
 )engine=InnoDB;
 insert into `logs_types`(`name`, `intensity`, `description`) values 
+('apiError', 5, 'Error in API service.'),
 ('sysError', 5, 'Error in system SESP. Attention, this error not is from computer'),
 ('pcError', 5, 'Error in computer. Attention, this error not is from system SESP'),
+('pcAlert', 4, 'Computer info . Computer information does not match GLPI information'),
 ('solutionFail', 4, 'System SESP failed at resolve problem'),
 ('glpiChangedData', 3, 'Computer data has been changed in the GLPI'),
 ('problemSolved', 1, 'System SESP has been solved a problem'),
 ('fusionNewInventory', 1, 'Computer inventory has been changed in the GLPI by FusionInventory');
 
 
+create table api_logs(
+    `id` int(12) primary key auto_increment not null,
+    `type_id` int(12) not null,
+    `route` varchar(100),
+    `method` varchar(100),
+    `applicant` varchar(100),
+    `when` timestamp not null default now(),
+    `body` text
+)engine=InnoDB;
+
+
 create table computers_logs(
     `id` int(12) primary key auto_increment not null,
     `type_id` int(12) not null,
-    `computer_id` int(12) not null,
+    `computer_id` int(12),
     `when` timestamp not null default now(),
     `reference_table` varchar(100),
     `reference_id` int(12),
