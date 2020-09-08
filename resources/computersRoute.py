@@ -11,8 +11,6 @@ from resources.models.commons.errors.computersRouteErrors import ErrorController
 
 
 class ByInventoryNumber(Resource):
-
-    
     def __init__(self):
         try:
             self.model = Model()
@@ -117,10 +115,14 @@ class ByInventoryNumber(Resource):
 
 
 class ByName(Resource):
-
-    
     def __init__(self):
-        self.model = Model()
+        try:
+            self.model = Model()
+            self.computer_host = request.host
+            self.computer_status, computer = self.model._update_computer(request.headers, self.computer_host)
+
+        except Exception as e:
+            ErrorController(e, '/computers/byinventory', '__init__', self.computer_host)
 
 
     def get(self):
@@ -148,10 +150,14 @@ class ByName(Resource):
 
 
 class ByIpAddress(Resource):
-
-    
     def __init__(self):
-        self.model = Model()
+        try:
+            self.model = Model()
+            self.computer_host = request.host
+            self.computer_status, computer = self.model._update_computer(request.headers, self.computer_host)
+
+        except Exception as e:
+            ErrorController(e, '/computers/byinventory', '__init__', self.computer_host)
 
 
     def get(self):

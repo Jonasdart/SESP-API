@@ -24,11 +24,23 @@ Sabendo o número de inventário do computador que deseja alterar informações,
     3. Agendar um reinício do computador;
     4. Agendar o desligamento do computador;
 
-**_JSON:_**
+**HEADER**
 
 ```
 {
     "inventory_number": "0222",
+    "computer_name"   : "HAT0222",
+    "sesp_version"    : "0.0.3-DEV"
+}
+```
+
+
+
+**BODY**
+**_JSON:_**
+
+```
+{
     "change_name":0,
     "force_inventory": 1,
     "schedule_reboot":0,
