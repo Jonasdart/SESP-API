@@ -4,7 +4,6 @@
 #Python3
 __author__ = 'Jonas Duarte'
 
-
 class Gera_query(object):
     def __init__(self):
         self.query = ""
@@ -53,8 +52,7 @@ class Gera_query(object):
         return self.query
 
 
-    def inserir_na_tabela(self, tabela, colunas, dados, string = False):
-
+    def inserir_na_tabela(self, tabela, colunas, dados):
         """
         string é um booleano, que
         sendo verdadeiro indica que
@@ -71,22 +69,17 @@ class Gera_query(object):
             if cont < len(colunas):
                 self.query += ", "
         self.query += ") VALUES ("
-        if string:
-            cont = 0
-            for dado in dados:
-                cont += 1
+        
+        cont = 0
+        for dado in dados:
+            cont += 1
+            if dado * 0 == '' and 'now()' not in dado:
                 self.query += f"'{dado}'"
-                if cont < len(dados):
-                    self.query += ", "
-            self.query += ")"
-        else:
-            cont = 0
-            for dado in dados:
-                cont += 1
+            else:
                 self.query += f"{dado}"
-                if cont < len(dados):
-                    self.query += ", "
-            self.query += ")"
+            if cont < len(dados):
+                self.query += ", "
+        self.query += ")"
 
         return self.query
 
@@ -100,24 +93,33 @@ class Gera_query(object):
         sem estar entre aspas
         """
         self.query =  f"UPDATE `{tabela}` SET "
-        if string:
-            for x in range(len(colunas)):
-                self.query += f"`{colunas[x]}` = '{dados[x]}' "
-                if x < len(colunas)-1:
-                    self.query += ", "
-        else:
-            for x in range(len(colunas)):
-                self.query += f'`{colunas[x]}` = {dados[x]}'
-                if x < len(colunas)-1:
-                    self.query += ', '
+
+        x = 0
+        for coluna in colunas:
+            if dados[x] * 0 == '' and dados[x] != 'now()':
+                self.query += f"`{coluna}` = '{dados[x]}'"
+            else:
+                self.query += f'`{coluna}` = {dados[x]}'
+            if x < len(dados)-1:
+                self.query += ', '
+                x += 1
+
         if where:
-            self.query += f"WHERE `{coluna_verificacao}` = {valor_where}"
+            self.query += f" WHERE `{coluna_verificacao}` = {valor_where}"
         self.query += ";"
+
         return self.query
 
 
-    def buscar_dados_da_tabela(self, tabela, where = False, coluna_verificacao = "", valor_where = ""):
-        self.query = f"SELECT * FROM `{tabela}` "
+    def buscar_dados_da_tabela(self, tabela, where = False, coluna_verificacao = "", valor_where = "", returns=['*']):
+        self.query = 'SELECT'
+
+        for item in returns:
+            self.query += f' {item}'
+            if item != returns[len(returns)-1]:
+                self.query += ','
+
+        self.query += f' FROM `{tabela}` '
         if where:
             try:
                 coluna_verificacao.append("")
@@ -127,7 +129,7 @@ class Gera_query(object):
                 del(coluna_verificacao[len(coluna_verificacao)-1])
                 self.query += "WHERE "
                 for x in range(len(coluna_verificacao)):
-                    self.query += f"`{coluna_verificacao[x]}` = '{valor_where[x]}'"
+                    self.query += f'`{coluna_verificacao[x]}` like "%{valor_where[x]}%"'
                     if x < len(coluna_verificacao) - 1:
                         self.query += " AND "
 

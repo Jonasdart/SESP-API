@@ -4,10 +4,14 @@
 #Python3
 __author__ = 'Jonas Duarte'
 
+from commons import conf
+
 from resources.models.commons.mysql_manager import Gera_query
 from resources.models.commons.glpi import Glpi
 from resources.models.commons.database_manager import Database
+from datetime import datetime, timedelta
 import requests
+import configparser
 
 class ComputerModel():
     
@@ -54,12 +58,9 @@ class ComputerModel():
 
     def _search_by_inventory_number(self, inventory_number):
         try:
-            query = f"""
-                select
-                    id as computer_id, computer_name, status_id, glpi_id, glpi_name
-                    from computers where inventory_number={inventory_number}
-            """
-            header = ['computer_id', 'computer_name', 'status_id', 'glpi_id', 'glpi_name']
+            header = ['computer_id', 'computer_name', 'status_id', 'next_fusion_inventory', 'next_reboot', 'next_shutdown', 'glpi_id', 'glpi_name']
+            query = Gera_query().buscar_dados_da_tabela('computers', where=True, coluna_verificacao='inventory_number', valor_where=inventory_number, returns=header)
+            print(query)
             results = Database().commit_with_return(query)
 
             return_results = {}
@@ -166,7 +167,14 @@ class ComputerModel():
                 
                 if response.status_code != 200:
                     raise 'Error during request new inventory by http server.'
+
+
+            fusion_frequency = conf.fusion_inventory()['inventory_frequency']
+            next_fusion_inventory = datetime.now()+timedelta(days=fusion_frequency)
+            next_fusion_inventory = datetime.strftime(next_fusion_inventory, '%Y-%m-%d %H:%M')
             
+            query = f'UPDATE `computers` SET `next_fusion_inventory` = "{next_fusion_inventory}" WHERE `inventory_number`= {inventory_number};'
+            Database().commit_without_return(query)
             query = f"insert into computers_logs(`type_id`, `computer_id`, `body`) values (8, {glpi_id}, 'New inventory has completed succesfully')"
             Database().commit_without_return(query)
 
@@ -184,7 +192,7 @@ class ComputerModel():
 
     def _new_computer(self, computer_name, inventory_number, last_request_host):
         try:
-            query = Gera_query().inserir_na_tabela('computers', ['computer_name', 'inventory_number', 'status_id', 'last_request_host'], [f'"{computer_name}"', f'"{inventory_number}"', 6, f'"{last_request_host}"'])
+            query = Gera_query().inserir_na_tabela('computers', ['computer_name', 'inventory_number', 'status_id', 'last_request_host'], [computer_name, inventory_number, 6, last_request_host])
             Database().commit_without_return(query)
 
             status, computer_info = self._validate_informations(inventory_number, last_request_host)
@@ -196,6 +204,7 @@ class ComputerModel():
             Database().commit_without_return(query)
 
             computer_info = self._search_by_inventory_number(inventory_number)
+            self._force_next_inventory(inventory_number)
         
         except Exception as e:
             raise e
