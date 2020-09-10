@@ -18,15 +18,18 @@ insert into `computers_status`(`name`,`description`) values
 
 
 create table computers(
-    `id` int(12) primary key auto_increment not null,
+    `computer_id` int(12) primary key auto_increment not null,
     `computer_name` varchar(100) not null,
     `inventory_number` varchar(100),
     `status_id` int(12) not null,
     `last_request_host` varchar(100) not null,
+    `next_fusion_inventory` varchar(100),
+    `next_reboot` varchar(100),
+    `next_shutdown` varchar(100),
     `glpi_id` int(12),
-    `glpi_name` varchar(100)
+    `glpi_name` varchar(100),
+    unique(computer_name)
 )engine=InnoDB;
-
 
 create table logs_types(
     `id` int(12) primary key auto_increment not null,

@@ -18,6 +18,7 @@ class ByInventoryNumber(Resource):
             self.computer_status, computer = self.model._update_computer(request.headers, self.computer_host)
 
         except Exception as e:
+            raise
             ErrorController(e, '/computers/byinventory', '__init__', self.computer_host)
 
 
@@ -36,8 +37,11 @@ class ByInventoryNumber(Resource):
             if not inventory_number:
                 self.error = 'Please inform a valid InventoryNumber'
                 raise self.error
-            
-            response = self.model._search_in_glpi_by_inventory_number(inventory_number)
+
+            response = {
+                'glpi' : self.model._search_in_glpi_by_inventory_number(inventory_number),
+                'sesp' : self.model._search_by_inventory_number(inventory_number)
+            }
 
         except:
             ErrorController(self.error, '/computers/byinventory', 'get', self.computer_host)
@@ -76,7 +80,7 @@ class ByInventoryNumber(Resource):
 
             if force_inventory:
                 if self.computer_status != 1 and self.computer_status != 6:
-                    self.model._force_next_inventory(inventory_number, ip_request)
+                    self.model._force_next_inventory(inventory_number, computer_ipaddress=ip_request)
                     actions += 1
                 else:
                     self.error = 'The name of this computer does not match with GLPI information'

@@ -91,6 +91,7 @@ class Glpi():
 
 
     def commit_without_return(self, query):
+        print(query)
         self.connect()
         try:
             self.cursor.execute(query)
@@ -103,6 +104,7 @@ class Glpi():
 
 
     def commit_with_return(self, query):
+        print(query)
         results = None
         self.connect()
         try:

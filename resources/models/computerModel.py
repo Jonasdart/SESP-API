@@ -60,7 +60,6 @@ class ComputerModel():
         try:
             header = ['computer_id', 'computer_name', 'status_id', 'next_fusion_inventory', 'next_reboot', 'next_shutdown', 'glpi_id', 'glpi_name']
             query = Gera_query().buscar_dados_da_tabela('computers', where=True, coluna_verificacao='inventory_number', valor_where=inventory_number, returns=header)
-            print(query)
             results = Database().commit_with_return(query)
 
             return_results = {}
@@ -148,7 +147,6 @@ class ComputerModel():
 
     def _force_next_inventory(self, inventory_number, now=True, computer_ipaddress=False):
         try:
-
             computer = self._search_in_glpi_by_inventory_number(str(inventory_number))
             glpi_id = computer[1]['computer_id']
 
@@ -204,7 +202,7 @@ class ComputerModel():
             Database().commit_without_return(query)
 
             computer_info = self._search_by_inventory_number(inventory_number)
-            self._force_next_inventory(inventory_number)
+            self._force_next_inventory(inventory_number, computer_ipaddress=last_request_host)
         
         except Exception as e:
             raise e
