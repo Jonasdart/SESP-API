@@ -14,7 +14,8 @@ class ByInventoryNumber(Resource):
     def __init__(self):
         try:
             self.model = Model()
-            self.computer_host = request.host
+            self.computer_host = request.environ['REMOTE_ADDR']
+            
             self.computer_status, computer = self.model._update_computer(request.headers, self.computer_host)
 
         except Exception as e:
@@ -55,7 +56,6 @@ class ByInventoryNumber(Resource):
         '''
         body = request.get_json()
         header = request.headers
-        ip_request = request.host
         
         actions = 0
         try:
@@ -80,7 +80,7 @@ class ByInventoryNumber(Resource):
 
             if force_inventory:
                 if self.computer_status != 1 and self.computer_status != 6:
-                    self.model._force_next_inventory(inventory_number, computer_ipaddress=ip_request)
+                    self.model._force_next_inventory(inventory_number, computer_ipaddress=self.computer_host)
                     actions += 1
                 else:
                     self.error = 'The name of this computer does not match with GLPI information'
@@ -107,15 +107,20 @@ class ByInventoryNumber(Resource):
     
     def patch(self):
         '''
-        Usado para alterar o Status do computador no GLPI para Ativo.
+        Usado para alterar o Status do computador.
         '''
         try:
-            data = request.args
-            response = None
+            data = dict(request.args)
+            header = request.headers
+
+            inventory_number = header['Inventory_Number']
+            status = data['status']
+           
+            self.model._update_status_of_computer(inventory_number, status)
         except Exception as e:
             ErrorController(e, '/computers/byinventory', 'patch', self.computer_host)
 
-        return response
+        return True
 
 
 class ByName(Resource):

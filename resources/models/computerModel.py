@@ -160,21 +160,21 @@ class ComputerModel():
                                 break
                         except:
                             pass
-                request = f'http://{computer_ipaddress}:62354/now'
-                response = requests.get(request)
-                
-                if response.status_code != 200:
-                    raise 'Error during request new inventory by http server.'
-
-
-            fusion_frequency = conf.fusion_inventory()['inventory_frequency']
-            next_fusion_inventory = datetime.now()+timedelta(days=fusion_frequency)
-            next_fusion_inventory = datetime.strftime(next_fusion_inventory, '%Y-%m-%d %H:%M')
-            
-            query = f'UPDATE `computers` SET `next_fusion_inventory` = "{next_fusion_inventory}" WHERE `inventory_number`= {inventory_number};'
-            Database().commit_without_return(query)
-            query = f"insert into computers_logs(`type_id`, `computer_id`, `body`) values (8, {glpi_id}, 'New inventory has completed succesfully')"
-            Database().commit_without_return(query)
+                try:
+                    request = f'http://{computer_ipaddress}:62354/now'
+                    response = requests.get(request)
+                except:
+                    query = f'UPDATE `computers` SET `status_id` = 3 WHERE `inventory_number`= {inventory_number};'
+                    Database().commit_without_return(query)
+                else:                
+                    fusion_frequency = conf.fusion_inventory()['inventory_frequency']
+                    next_fusion_inventory = datetime.now()+timedelta(days=fusion_frequency)
+                    next_fusion_inventory = datetime.strftime(next_fusion_inventory, '%Y-%m-%d %H:%M')
+                    
+                    query = f'UPDATE `computers` SET `next_fusion_inventory` = "{next_fusion_inventory}" WHERE `inventory_number`= {inventory_number};'
+                    Database().commit_without_return(query)
+                    query = f"insert into computers_logs(`type_id`, `computer_id`, `body`) values (8, {glpi_id}, 'New inventory has completed succesfully')"
+                    Database().commit_without_return(query)
 
         except Exception as e:
             raise e      
@@ -216,11 +216,13 @@ class ComputerModel():
             computer_name = request_header['Computer_Name']
             last_request_host = computer_host
             
-            try:
+            try:    
                 computer = self._search_by_inventory_number(inventory_number)
+                query = f'UPDATE `computers` SET `last_request_host` = "{computer_host}" WHERE `inventory_number`= {inventory_number};'
+                Database().commit_without_return(query)
 
                 if computer[1]['computer_name'] != computer_name:
-                    query = f'UPDATE `computers` SET `computer_name` = "{computer_name}", `last_request_host` = "{computer_host}" WHERE `inventory_number`= {inventory_number};'
+                    query = f'UPDATE `computers` SET `computer_name` = "{computer_name}" WHERE `inventory_number`= {inventory_number};'
                     Database().commit_without_return(query)
 
                 status, computer_info = self._validate_informations(inventory_number, computer_host)
@@ -232,8 +234,15 @@ class ComputerModel():
                 query = f'UPDATE `computers` SET `glpi_id` = {glpi_id}, `glpi_name` = "{glpi_name}" WHERE `inventory_number`= {inventory_number};'
                 Database().commit_without_return(query)
 
-            except:
-                status, computer = self._new_computer(computer_name, inventory_number, last_request_host)
+                if status != 1 and status != 2 and status != 6:
+                    if computer[1]['next_fusion_inventory'] is None:
+                        self._force_next_inventory(inventory_number, computer_ipaddress=last_request_host)
+
+            except Exception as e:
+                if e is not AssertionError:
+                    status, computer = self._new_computer(computer_name, inventory_number, last_request_host)
+                else:
+                    raise
 
         except Exception as e:
             raise e
@@ -245,7 +254,10 @@ class ComputerModel():
         try:
             status = 7
             _info = self._search_by_inventory_number(inventory_number)
-            _glpi_info = self._search_in_glpi_by_inventory_number(inventory_number)
+            try:
+                _glpi_info = self._search_in_glpi_by_inventory_number(inventory_number)
+            except:
+                raise AssertionError('GLPI server is not responding')
 
             count = 0
             for computer in _glpi_info.values():
@@ -261,11 +273,23 @@ class ComputerModel():
             if _glpi_info[1]['computer_name'] != _info[1]['computer_name']:
                 status = 1
             
-            if _info[1]['status_id'] != status:
+            if _info[1]['status_id'] != status and _info[1]['status_id'] != 2:
                 query = f'UPDATE `computers` SET `status_id` = {status} WHERE `inventory_number`= {inventory_number};'
                 Database().commit_without_return(query)
+
+            print(_info[1]['status_id'])
 
         except Exception as e:
             raise e
 
         return status, _glpi_info
+
+
+    def _update_status_of_computer(self, inventory_number, status):
+        try:
+            query = f'UPDATE `computers` SET `status_id` = {status} WHERE `inventory_number`= {inventory_number};'
+            Database().commit_without_return(query)
+        except Exception as e:
+            raise e
+
+        return True

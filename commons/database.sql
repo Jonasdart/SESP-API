@@ -3,9 +3,9 @@ use sesp;
 
 
 create table computers_status(
-    `id` int(12) primary key auto_increment not null,
-    `name` varchar(100) not null,
-    `description` varchar(200)
+    `status_id` int(12) primary key auto_increment not null,
+    `status_name` varchar(100) not null,
+    `status_description` varchar(200)
 )engine=InnoDB;
 insert into `computers_status`(`name`,`description`) values
 ('Nome fora do padrao', 'Aguardando alteração de nome'),
@@ -30,6 +30,7 @@ create table computers(
     `glpi_name` varchar(100),
     unique(computer_name)
 )engine=InnoDB;
+
 
 create table logs_types(
     `id` int(12) primary key auto_increment not null,
@@ -134,3 +135,23 @@ create table to_solve(
     `problem_id` int(12) not null,
     `solution_id` int(12) not null
 )engine=InnoDB;
+
+
+alter table computers
+add constraint fk_status foreign key(status_id) references computers_status(id);
+
+
+alter table api_logs
+add constraint fk_log_type foreign key(type_id) references logs_types(id);
+
+
+alter table computers_logs
+add constraint fk_computer foreign key(computer_id) references computers(computer_id);
+add constraint fk_log_type2 foreign key(type_id) references logs_types(id);
+
+alter table causes
+add constraint fk_incident foreign key(incident_id) references incidents(id),
+add constraint fk_problem foreign key(problem_id) references problems(id);
+
+alter table scripts
+add constraint fk_script_type foreign key(script_type)
