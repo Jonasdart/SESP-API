@@ -114,9 +114,20 @@ class ByInventoryNumber(Resource):
             header = request.headers
 
             inventory_number = header['Inventory_Number']
-            status = data['status']
+            try:
+                status = data['status']
+            except:
+                pass
+            else:
+                self.model._update_status_of_computer(inventory_number, status)
+            try:
+                fusion_executed = data['fusion_executed']
+            except:
+                pass
+            else:
+                self.model._schedule_next_inventory(inventory_number)
            
-            self.model._update_status_of_computer(inventory_number, status)
+            
         except Exception as e:
             ErrorController(e, '/computers/byinventory', 'patch', self.computer_host)
 

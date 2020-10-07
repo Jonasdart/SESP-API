@@ -179,6 +179,24 @@ class ComputerModel():
         except Exception as e:
             raise e      
 
+    
+    def _schedule_next_inventory(self, inventory_number):
+        try:
+            computer = self._search_in_glpi_by_inventory_number(str(inventory_number))
+            glpi_id = computer[1]['computer_id']
+            
+            fusion_frequency = conf.fusion_inventory()['inventory_frequency']
+            next_fusion_inventory = datetime.now()+timedelta(days=fusion_frequency)
+            next_fusion_inventory = datetime.strftime(next_fusion_inventory, '%Y-%m-%d %H:%M')
+            
+            query = f'UPDATE `computers` SET `next_fusion_inventory` = "{next_fusion_inventory}" WHERE `inventory_number`= {inventory_number};'
+            Database().commit_without_return(query)
+            
+            query = f"insert into computers_logs(`type_id`, `computer_id`, `body`) values (8, {glpi_id}, 'New inventory has completed succesfully')"
+            Database().commit_without_return(query)
+        except:
+            raise
+
 
     def _schedule_next_reboot(self, inventory_number, now=False):
         raise NotImplementedError
