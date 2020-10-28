@@ -6,6 +6,7 @@ __author__ = 'Jonas Duarte'
 
 from flask import request
 from flask_restful import Resource
+from commons import conf
 from resources.models.computerModel import ComputerModel as Model
 from resources.models.commons.errors.computersRouteErrors import ErrorController
 
@@ -40,6 +41,7 @@ class ByInventoryNumber(Resource):
                 raise self.error
 
             response = {
+                'current_version' : conf.current_version(),
                 'glpi' : self.model._search_in_glpi_by_inventory_number(inventory_number),
                 'sesp' : self.model._search_by_inventory_number(inventory_number)
             }

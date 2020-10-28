@@ -16,7 +16,7 @@ def sesp_server():
 
     return {
         'address' : bind_address,
-        'port'    : port,
+        'port'    : bind_port,
         'debug'   : debug
     }
 
@@ -32,3 +32,11 @@ def fusion_inventory():
         'server' : server,
         'inventory_frequency'    : int(inventory_frequency),
     }
+
+def current_version():
+    config = configparser.ConfigParser()
+    config.read('resources\\models\\commons\\conf.cfg')
+
+    current_version = config.get('current_version', 'version')
+
+    return current_version
