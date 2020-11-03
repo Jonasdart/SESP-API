@@ -17,7 +17,6 @@ class Glpi():
 
     def connect(self):
         if not self.connected:
-            print('Conectando...')
             credencials = self.authenticate()
             address = credencials.get('Address')
             name = credencials.get('Name')
@@ -41,7 +40,6 @@ class Glpi():
 
     def disconnect(self):
         if self.connected:
-            print('Disconectando...')
             try:
                 self.bank.close()
             except:
@@ -60,7 +58,7 @@ class Glpi():
         [2] Senha Usuario, [3] Nome Banco
         """
         config = configparser.ConfigParser()
-        config.read('resources\\models\\commons\\conf.cfg')
+        config.read('resources/models/commons/conf.cfg')
 
         address = config.get('glpi_database', 'address')
         name = config.get('glpi_database', 'name')
@@ -91,7 +89,6 @@ class Glpi():
 
 
     def commit_without_return(self, query):
-        print(query)
         self.connect()
         try:
             self.cursor.execute(query)
@@ -104,7 +101,6 @@ class Glpi():
 
 
     def commit_with_return(self, query):
-        print(query)
         results = None
         self.connect()
         try:

@@ -7,7 +7,7 @@ create table computers_status(
     `status_name` varchar(100) not null,
     `status_description` varchar(200)
 )engine=InnoDB;
-insert into `computers_status`(`name`,`description`) values
+insert into `computers_status`(`status_name`,`status_description`) values
 ('Nome fora do padrao', 'Aguardando alteração de nome'),
 ('Fusion indisponível', 'Aguardando instalação do Fusion Inventory'),
 ('Fusion server inacessível', 'O servidor http do Fusion Inventory utilizado para forçar o inventário não está acessível'),
@@ -26,6 +26,7 @@ create table computers(
     `next_fusion_inventory` varchar(100),
     `next_reboot` varchar(100),
     `next_shutdown` varchar(100),
+    `wallpaper` varchar(1000) not null default 'default',
     `glpi_id` int(12),
     `glpi_name` varchar(100),
     unique(computer_name)
@@ -138,15 +139,13 @@ create table to_solve(
 
 
 alter table computers
-add constraint fk_status foreign key(status_id) references computers_status(id);
-
+add constraint fk_status foreign key(status_id) references computers_status(status_id);
 
 alter table api_logs
 add constraint fk_log_type foreign key(type_id) references logs_types(id);
 
-
 alter table computers_logs
-add constraint fk_computer foreign key(computer_id) references computers(computer_id);
+add constraint fk_computer foreign key(computer_id) references computers(computer_id),
 add constraint fk_log_type2 foreign key(type_id) references logs_types(id);
 
 alter table causes
@@ -154,4 +153,4 @@ add constraint fk_incident foreign key(incident_id) references incidents(id),
 add constraint fk_problem foreign key(problem_id) references problems(id);
 
 alter table scripts
-add constraint fk_script_type foreign key(script_type)
+add constraint fk_script_type foreign key(type_id) references scripts_types(id)

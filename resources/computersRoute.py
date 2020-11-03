@@ -7,6 +7,7 @@ __author__ = 'Jonas Duarte'
 from flask import request
 from flask_restful import Resource
 from commons import conf
+from commons.errors import BadURLError, BadInventoryNumberError, BadRequestError, GLPINameError
 from resources.models.computerModel import ComputerModel as Model
 from resources.models.commons.errors.computersRouteErrors import ErrorController
 
@@ -20,7 +21,6 @@ class ByInventoryNumber(Resource):
             self.computer_status, computer = self.model._update_computer(request.headers, self.computer_host)
 
         except Exception as e:
-            raise
             ErrorController(e, '/computers/byinventory', '__init__', self.computer_host)
 
 
@@ -32,13 +32,11 @@ class ByInventoryNumber(Resource):
 
             data = dict(request.args)            
             if len(data) != 1:
-                self.error = 'Bad URL request. Consult the documentation to know the parameters.'
-                raise self.error
+                raise BadURLError
 
             inventory_number = data['number']
             if not inventory_number:
-                self.error = 'Please inform a valid InventoryNumber'
-                raise self.error
+                raise BadInventoryNumberError
 
             response = {
                 'current_version' : conf.current_version(),
@@ -46,8 +44,8 @@ class ByInventoryNumber(Resource):
                 'sesp' : self.model._search_by_inventory_number(inventory_number)
             }
 
-        except:
-            ErrorController(self.error, '/computers/byinventory', 'get', self.computer_host)
+        except Exception as e:
+            ErrorController(e, '/computers/byinventory', 'get', self.computer_host)
 
         return response
     
@@ -63,8 +61,7 @@ class ByInventoryNumber(Resource):
         try:
             
             if(len(body) != 4):
-                self.error = 'Bad Request'
-                raise self.error
+                raise BadRequestError
 
             inventory_number = header['inventory_number']
             change_name = body['change_name']
@@ -73,8 +70,7 @@ class ByInventoryNumber(Resource):
             schedule_shutdown = body['schedule_shutdown']
 
             if not inventory_number:
-                self.error = 'Please inform a valid InventoryNumber'
-                raise self.error
+                raise BadInventoryNumberError
 
             if change_name:
                 self.model._change_name_in_glpi(str(inventory_number), change_name)
@@ -85,8 +81,7 @@ class ByInventoryNumber(Resource):
                     self.model._force_next_inventory(inventory_number, computer_ipaddress=self.computer_host)
                     actions += 1
                 else:
-                    self.error = 'The name of this computer does not match with GLPI information'
-                    raise self.error
+                    raise GLPINameError
 
             if schedule_reboot:
                 self.model._schedule_next_reboot(inventory_number, schedule_reboot)
@@ -100,9 +95,9 @@ class ByInventoryNumber(Resource):
                 'message':f'Success! {actions} actions performed!'
             }
 
-        except:
-            self.error = f'The System has been performed {actions} actions, but, a exception has occurred. Consult the documentation to know the order of execution of the actions. description:{self.error}'
-            ErrorController(self.error, '/computers/byinventory', 'put', self.computer_host)
+        except Exception as e:
+            error = f'The System has been performed {actions} actions, but, a exception has occurred. Consult the documentation to know the order of execution of the actions. description:{e}'
+            ErrorController(error, '/computers/byinventory', 'put', self.computer_host)
 
         return response
 
@@ -155,18 +150,16 @@ class ByName(Resource):
 
             data = dict(request.args)            
             if len(data) != 1:
-                self.error = 'Bad URL request. Consult the documentation to know the parameters.'
-                raise self.error
+                raise BadURLError
 
             name = data['name']
             if not name:
-                self.error = 'Please inform a valid name of computer'
-                raise self.error
+                raise BadInventoryNumberError
             
             response = self.model._search_in_glpi_by_name(name)
 
         except Exception as e:
-            ErrorController(self.error, '/computers/byname', 'get', self.computer_host)
+            ErrorController(e, '/computers/byname', 'get', self.computer_host)
 
         return response
 

@@ -58,7 +58,7 @@ class Database():
         [2] Senha Usuario, [3] Nome Banco
         """
         config = configparser.ConfigParser()
-        config.read('resources\\models\\commons\\conf.cfg')
+        config.read('resources/models/commons/conf.cfg')
 
         address = config.get('sesp_database', 'address')
         name = config.get('sesp_database', 'name')

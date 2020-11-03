@@ -4,6 +4,8 @@
 #Python3
 __author__ = 'Jonas Duarte'
 
+from commons.conf import sesp_server
+
 from flask import Flask
 from flask_restful import Api, Resource
 
@@ -31,4 +33,9 @@ api.add_resource(Solutions, '/solutions')
 
 
 if __name__ == '__main__':
-    app.run(host='192.168.0.69', port=80)
+    address, port, debug = sesp_server().values()
+    if debug == 'False': 
+        debug = False
+    else:
+        debug = True
+    app.run(host=address, port=port, debug=debug)
