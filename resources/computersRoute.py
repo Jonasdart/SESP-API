@@ -7,7 +7,7 @@ __author__ = 'Jonas Duarte'
 from flask import request
 from flask_restful import Resource
 from commons import conf
-from commons.errors import BadURLError, BadInventoryNumberError, BadRequestError, GLPINameError
+from commons.errors import BadURLError, BadInventoryNumberError, BadRequestError, GLPINameError, SESPVersionError
 from resources.models.computerModel import ComputerModel as Model
 from resources.models.commons.errors.computersRouteErrors import ErrorController
 
@@ -17,32 +17,37 @@ class ByInventoryNumber(Resource):
         try:
             self.model = Model()
             self.computer_host = request.environ['REMOTE_ADDR']
-            
-            self.computer_status, computer = self.model._update_computer(request.headers, self.computer_host)
+
+            if str(request.headers['Sesp-Version']) == str(conf.current_version()):
+                self.computer_status, computer = self.model._update_computer(request.headers, self.computer_host)
 
         except Exception as e:
             ErrorController(e, '/computers/byinventory', '__init__', self.computer_host)
 
-
+ 
     def get(self):
         '''
         Usada para buscar informações referentes ao computador com o número de inventário informado
         '''
         try:
+            if str(request.headers['Sesp-Version']) != str(conf.current_version()):
+                response =  {
+                    'current_version' : conf.current_version()
+                }
+            else:
+                data = dict(request.args)            
+                if len(data) != 1:
+                    raise BadURLError
 
-            data = dict(request.args)            
-            if len(data) != 1:
-                raise BadURLError
+                inventory_number = data['number']
+                if not inventory_number:
+                    raise BadInventoryNumberError
 
-            inventory_number = data['number']
-            if not inventory_number:
-                raise BadInventoryNumberError
-
-            response = {
-                'current_version' : conf.current_version(),
-                'glpi' : self.model._search_in_glpi_by_inventory_number(inventory_number),
-                'sesp' : self.model._search_by_inventory_number(inventory_number)
-            }
+                response = {
+                    'current_version' : conf.current_version(),
+                    'glpi' : self.model._search_in_glpi_by_inventory_number(inventory_number),
+                    'sesp' : self.model._search_by_inventory_number(inventory_number)
+                }
 
         except Exception as e:
             ErrorController(e, '/computers/byinventory', 'get', self.computer_host)
@@ -54,6 +59,11 @@ class ByInventoryNumber(Resource):
         '''
         Use para configurar o computador no GLPI e consequentemente fisicamente.
         '''
+        if request.headers['Sesp-Version'] != conf.current_version():
+            return {
+                'current_version' : conf.current_version()
+            }
+
         body = request.get_json()
         header = request.headers
         
@@ -106,6 +116,11 @@ class ByInventoryNumber(Resource):
         '''
         Usado para alterar o Status do computador.
         '''
+        if request.headers['Sesp-Version'] != conf.current_version():
+            return {
+                'current_version' : conf.current_version()
+            }
+            
         try:
             data = dict(request.args)
             header = request.headers
